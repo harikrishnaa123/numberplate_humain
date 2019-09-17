@@ -4,6 +4,8 @@ from copy import deepcopy
 from PIL import Image
 import pytesseract as tess
 
+tess.pytesseract.tesseract_cmd = r"C://Program Files//Tesseract-OCR//tesseract"
+
 def preprocess(img):
 	cv2.imshow("Input",img)
 	imgBlurred = cv2.GaussianBlur(img, (5,5), 0)
@@ -12,11 +14,11 @@ def preprocess(img):
 	ret2,threshold_img = cv2.threshold(sobelx,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
 	return threshold_img
 
-def cleanPlate(plate):
-	print "CLEANING PLATE. . ."
+def cleanPlate(plate): 
+	print ("CLEANING PLATE. . .")
 	gray = cv2.cvtColor(plate, cv2.COLOR_BGR2GRAY)
 	_, thresh = cv2.threshold(gray, 150, 255, cv2.THRESH_BINARY)
-	im1,contours,hierarchy = cv2.findContours(thresh.copy(),cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+	contours,hierarchy = cv2.findContours(thresh.copy(),cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
 	if contours:
 		areas = [cv2.contourArea(c) for c in contours]
@@ -37,7 +39,7 @@ def extract_contours(threshold_img):
 	cv2.morphologyEx(src=threshold_img, op=cv2.MORPH_CLOSE, kernel=element, dst=morph_img_threshold)
 	cv2.imshow("Morphed",morph_img_threshold)
 	cv2.waitKey(0)
-	im2,contours, hierarchy= cv2.findContours(morph_img_threshold,mode=cv2.RETR_EXTERNAL,method=cv2.CHAIN_APPROX_NONE)
+	contours, hierarchy= cv2.findContours(morph_img_threshold,mode=cv2.RETR_EXTERNAL,method=cv2.CHAIN_APPROX_NONE)
 	return contours
 
 def ratioCheck(area, width, height):
@@ -91,12 +93,14 @@ def cleanAndRead(img,contours):
 					cv2.waitKey(0)
 					plate_im = Image.fromarray(clean_plate)
 					text = tess.image_to_string(plate_im, lang='eng')
-					print "Detected Text : ",text
-					img = cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),2)
-					cv2.imshow("Detected Plate",img)
-					cv2.waitKey(0)
+					print ("Detected Text : ",text)
+					if text != None:
+						img = cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),2)
+						cv2.imshow("Detected Plate",img)
+						cv2.waitKey(0)
 if __name__ == '__main__':
-	print "DETECTING PLATE . . ."
-	img = cv2.imread("testData/test.jpeg")
+	print ("DETECTING PLATE . . .")
+	img = cv2.imread("./car11111.jpg")
 	threshold_img = preprocess(img)
 	contours= extract_contours(threshold_img)
+	cleanAndRead(img,contours)
